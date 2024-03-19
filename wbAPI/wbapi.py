@@ -47,14 +47,18 @@ async def get_current_price(*args):
                 is_available = False
             else:
                 is_available = True
-            print("""
+            c = """
 Цена обманка {} руб
 Цена истина {} руб
 В наличии: {}    
             """.format(
                     issue_price // 100, true_price // 100,
                     is_available
-                ))
+                )
+            print(c)
+            return c
         except Exception as e:
             print(e)
+            return False
+
 #asyncio.run(get_current_price('204572079'))
