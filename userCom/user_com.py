@@ -4,7 +4,9 @@ import re
 
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, ReplyKeyboardRemove, FSInputFile
+from aiogram.types import (Message, ReplyKeyboardRemove, FSInputFile,
+                           URLInputFile, BufferedInputFile)
+
 
 from wbAPI import wbapi
 
@@ -15,15 +17,13 @@ router = Router()
 # Хендлер ответ на сообщение
 @router.message(F.text)
 async def extract_data(message: Message):
-    print(' Содержание: ', message.text, '\n',
-          'Дата: ', message.date, '\n',
-          'ID пользователя: ', message.from_user.id, '\n',
-          'Имя пользователя: ', message.from_user.first_name, '\n',)
-    vendorСode = re.findall("\d+", message.text)[0]
-    a = await wbapi.get_current_price(vendorСode)
-    await message.reply(
-        'Получено: {} артикул\n{}'.format(vendorСode, a)
-            )
+    article = wbapi.retrieving_article(message.text)
+    if article != None:
+        data = await wbapi.get_current_price(article)
+        pic = await wbapi.get_pic_price(article)
+        await message.reply_photo(photo=pic, caption=data)
+    else:
+        await message.reply('Не корректно введена ссылка')
 
 # # Хендлер Запрос по последним операциям
 # @router.message(Command('requesttransac'))

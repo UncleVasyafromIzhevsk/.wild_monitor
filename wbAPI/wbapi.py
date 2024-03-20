@@ -6,31 +6,23 @@ import asyncio
 import httpx
 import json
 import datetime
+import re
 
-
-# История цены по товару
-# в историю попадают только последние изменения, текущая нет
-async def product_price_history(*args):
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(args[0])
-            a = response.json()
-            print(a)
-            for r in a[::-1]:
-                # print(a[0]['dt'])
-                ts = r['dt']
-                # print(a[0]['price']['RUB'])
-                # Переводим в нормальное время
-                value = datetime.datetime.fromtimestamp(ts)
-                # print(value.strftime('%Y-%m-%d %H:%M:%S'))
-                # Переводим цены в рубли
-                price = (r['price']['RUB']) // 100
-                # print(price)
-                print('На дату {} цена была {} рублей'.format(value, price))
-        except json.JSONDecodeError as e:
-            print('Ошибка при обработке json история цены')
-# asyncio.run(product_price_history('https://basket-10.wbbasket.ru/vol1375/part137593/137593603/info/price-history.json'))
-
+# Вайлдберрис
+# Извлечение артикула
+def retrieving_article(*args):
+    try:
+        print(args[0])
+        if (args[0].find("wildberries.ru/catalog/") != -1):
+            article = args[0].split('/')
+            print(article[4])
+            return article[4]
+        else:
+            return None
+    except Exception as e:
+        print(
+            f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}")
+#retrieving_article('https://www.wildberries.ru/catalog/70519597/detail.aspx?targetUrl=SN')
 # Получение текущей цены товара, цены обманки и состояния наличия товара
 # В аргумент передаем артикул
 async def get_current_price(*args):
@@ -40,7 +32,7 @@ async def get_current_price(*args):
         try:
             response = await client.get(baseURL + args[0])
             a = response.json()
-            issue_price = (a['data']['products'][0])['priceU']
+            name = (a['data']['products'][0])['name']
             true_price = (a['data']['products'][0])['salePriceU']
             b = (((a['data']['products'][0])['sizes'])[0])['stocks']
             if not b:
@@ -48,11 +40,11 @@ async def get_current_price(*args):
             else:
                 is_available = True
             c = """
-Цена обманка {} руб
-Цена истина {} руб
+Название: {}
+Цена: {} руб
 В наличии: {}    
             """.format(
-                    issue_price // 100, true_price // 100,
+                    name, true_price // 100,
                     is_available
                 )
             print(c)
@@ -60,5 +52,39 @@ async def get_current_price(*args):
         except Exception as e:
             print(e)
             return False
-
 #asyncio.run(get_current_price('204572079'))
+# Извлечение URL изображение товара
+async def get_pic_price(*args):
+    # Перебираем корзины от 0 до 15
+    for idx in range(0, 16):
+        try:
+            # Если артикул 9-и значный то адрес
+            if (len(args[0]) == 9):
+                if idx < 10:
+                    basket = '0' + str(idx)
+                elif idx >= 10:
+                    basket = idx
+                picURL = ('https://basket-{}.wbbasket.ru/'.format(basket) +
+                      'vol{}/part{}/{}/images/big/1.webp'.format(
+                          args[0][:4], args[0][:6], args[0])
+                          )
+            # Если артикул 8-и значный то адрес
+            elif (len(args[0]) == 8):
+                if idx < 10:
+                    basket = '0' + str(idx)
+                elif idx >= 10:
+                    basket = idx
+                picURL = ('https://basket-0{}.wbbasket.ru/'.format(basket) +
+                          'vol{}/part{}/{}/images/big/1.webp'.format(
+                              args[0][:3], args[0][:5], args[0])
+                          )
+            print(picURL)
+            async with httpx.AsyncClient() as client:
+                response = await client.get(picURL)
+                print(response.status_code)
+                if response.status_code == 200:
+                    return picURL
+        except Exception as e:
+            print(
+                f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}")
+#asyncio.run(get_pic_price('70520736'))
