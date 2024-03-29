@@ -13,8 +13,13 @@ from wbAPI import wbapi
 # Создание отдельного роутера
 router = Router()
 
+# Хендлер на регистрацию пользователя
+@router.message(Command('start'))
+async def any_message(message: Message):
+    print(message.from_user.id, message.from_user.first_name)
+    await message.answer('Будет рега')
 
-# Хендлер ответ на сообщение
+# Ответ на сообщение
 @router.message(F.text)
 async def extract_data(message: Message):
     article = wbapi.retrieving_article(message.text)
@@ -24,6 +29,8 @@ async def extract_data(message: Message):
         await message.reply_photo(photo=pic, caption=data)
     else:
         await message.reply('Не корректно введена ссылка')
+
+
 
 # # Хендлер Запрос по последним операциям
 # @router.message(Command('requesttransac'))

@@ -4,17 +4,18 @@
 
 import asyncio
 import httpx
-import json
-import datetime
-import re
+
 
 # Вайлдберрис
 # Извлечение артикула
 def retrieving_article(*args):
     try:
         print(args[0])
+        idx = args[0].find('https://')
+        article_compar = args[0][idx:len(args[0])]
+        print(article_compar)
         if (args[0].find("wildberries.ru/catalog/") != -1):
-            article = args[0].split('/')
+            article = article_compar.split('/')
             print(article[4])
             return article[4]
         else:
@@ -22,8 +23,10 @@ def retrieving_article(*args):
     except Exception as e:
         print(
             f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}")
-#retrieving_article('https://www.wildberries.ru/catalog/70519597/detail.aspx?targetUrl=SN')
-# Получение текущей цены товара, цены обманки и состояния наличия товара
+# retrieving_article('ThinkPad L460 i3 8/128/6 generation lenovo'
+#     'https://wildberries.ru/catalog/179968448/detail.aspx')
+
+# Получение текущей цены товара, названия и состояния наличия товара
 # В аргумент передаем артикул
 async def get_current_price(*args):
     baseURL = ('https://card.wb.ru/cards/v1/detail?appType=' +
@@ -74,7 +77,7 @@ async def get_pic_price(*args):
                     basket = '0' + str(idx)
                 elif idx >= 10:
                     basket = idx
-                picURL = ('https://basket-0{}.wbbasket.ru/'.format(basket) +
+                picURL = ('https://basket-{}.wbbasket.ru/'.format(basket) +
                           'vol{}/part{}/{}/images/big/1.webp'.format(
                               args[0][:3], args[0][:5], args[0])
                           )
@@ -88,3 +91,7 @@ async def get_pic_price(*args):
             print(
                 f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}")
 #asyncio.run(get_pic_price('70520736'))
+
+
+
+
