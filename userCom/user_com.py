@@ -9,6 +9,7 @@ from aiogram.types import (Message, ReplyKeyboardRemove, FSInputFile,
 
 
 from wbAPI import wbapi
+from baseWB import work_db
 
 # Создание отдельного роутера
 router = Router()
@@ -16,8 +17,39 @@ router = Router()
 # Хендлер на регистрацию пользователя
 @router.message(Command('start'))
 async def any_message(message: Message):
-    print(message.from_user.id, message.from_user.first_name)
-    await message.answer('Будет рега')
+    examination = await work_db.add_user(
+        message.from_user.id, message.from_user.first_name
+    )
+    if examination:
+        await message.answer(
+            f'{message.from_user.first_name}, ваша учетная запись создана'
+        )
+    elif not examination:
+        await message.answer(
+            f'{message.from_user.first_name}, вы уже зарегистрированы'
+        )
+    else:
+        await message.answer(
+            f'{message.from_user.first_name}, что-то пошло не так!'
+        )
+
+# Хендлер на удаление пользователя
+@router.message(Command('delete'))
+async def any_message(message: Message):
+    examination = await work_db.delete_user(message.from_user.id)
+    if examination:
+        await message.answer(
+            f'{message.from_user.first_name}, ваша учетная запись и данные'
+            ' успешно удалены'
+        )
+    elif not examination:
+        await message.answer(
+            f'{message.from_user.first_name}, вы еще не зарегистрированы'
+        )
+    else:
+        await message.answer(
+            f'{message.from_user.first_name}, что-то пошло не так!'
+        )
 
 # Ответ на сообщение
 @router.message(F.text)
