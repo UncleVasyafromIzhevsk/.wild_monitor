@@ -1,18 +1,17 @@
 import json
 import re
 
-
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import (Message, ReplyKeyboardRemove, FSInputFile,
                            URLInputFile, BufferedInputFile)
-
 
 from wbAPI import wbapi
 from baseWB import work_db
 
 # Создание отдельного роутера
 router = Router()
+
 
 # Хендлер на регистрацию пользователя
 @router.message(Command('start'))
@@ -33,6 +32,7 @@ async def any_message(message: Message):
             f'{message.from_user.first_name}, что-то пошло не так!'
         )
 
+
 # Хендлер на удаление пользователя
 @router.message(Command('delete'))
 async def any_message(message: Message):
@@ -51,18 +51,17 @@ async def any_message(message: Message):
             f'{message.from_user.first_name}, что-то пошло не так!'
         )
 
+
 # Ответ на сообщение
 @router.message(F.text)
 async def extract_data(message: Message):
     article = wbapi.retrieving_article(message.text)
-    if article != None:
+    if article is not None:
         data = await wbapi.get_current_price(article)
         pic = await wbapi.get_pic_price(article)
         await message.reply_photo(photo=pic, caption=data)
     else:
         await message.reply('Не корректно введена ссылка')
-
-
 
 # # Хендлер Запрос по последним операциям
 # @router.message(Command('requesttransac'))
@@ -254,7 +253,3 @@ async def extract_data(message: Message):
 #     elif a == 'ok':
 #         image = FSInputFile('horseAllPNG.png')
 #         await message.answer_photo(image, caption="График табуна")
-
-
-
-

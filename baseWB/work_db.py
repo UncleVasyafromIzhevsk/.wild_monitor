@@ -3,11 +3,17 @@ import asyncio
 
 # Создание или проверка существования БД
 # Создание таблицы пользователей
+# Создание таблицы товаров
 async def create_table():
-    async with aiosqlite.connect('baseWB.db') as db:
+    async with aiosqlite.connect('./baseWB/baseWB.db') as db:
         await db.execute(
             """CREATE TABLE IF NOT EXISTS user(
                     user_id INTEGER PRIMARY KEY, name TEXT);"""
+        )
+        await db.execute(
+            """CREATE TABLE IF NOT EXISTS goods(
+                    user_id INTEGER PRIMARY KEY, article INTEGER, name TEXT, starting_price REAL,
+                    registration_date TEXT, link_picture TEXT, link_goods TEXT);"""
         )
         await db.commit()
 #asyncio.run(create_table())
