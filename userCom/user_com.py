@@ -1,6 +1,7 @@
 import json
 import re
 
+
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import (Message, ReplyKeyboardRemove, FSInputFile,
@@ -9,9 +10,9 @@ from aiogram.types import (Message, ReplyKeyboardRemove, FSInputFile,
 from wbAPI import wbapi
 from baseWB import work_db
 
+
 # Создание отдельного роутера
 router = Router()
-
 
 # Хендлер на регистрацию пользователя
 @router.message(Command('start'))
