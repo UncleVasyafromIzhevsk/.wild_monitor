@@ -1,18 +1,30 @@
 import json
 import re
-
+import datetime
 
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import (Message, ReplyKeyboardRemove, FSInputFile,
-                           URLInputFile, BufferedInputFile)
+                           URLInputFile, BufferedInputFile, InlineKeyboardMarkup, InlineKeyboardButton,
+                           ReplyKeyboardMarkup, KeyboardButton, CallbackQuery)
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from wbAPI import wbapi
 from baseWB import work_db
 
-
 # Создание отдельного роутера
 router = Router()
+
+# Словарь для запроса на внесение товара в БД
+database_query_data = {
+    'user_id': 0,
+    'article': 0,
+    'name': '',
+    'starting_price': 0.0,
+    'registration_date': '',
+    'link_picture': '',
+    'link_goods': ''
+}
 
 # Хендлер на регистрацию пользователя
 @router.message(Command('start'))
@@ -56,13 +68,79 @@ async def any_message(message: Message):
 # Ответ на сообщение
 @router.message(F.text)
 async def extract_data(message: Message):
-    article = wbapi.retrieving_article(message.text)
-    if article is not None:
-        data = await wbapi.get_current_price(article)
-        pic = await wbapi.get_pic_price(article)
-        await message.reply_photo(photo=pic, caption=data)
+    # Проверка пользователя на регистрацию
+    examination = await work_db.add_user(
+        message.from_user.id, message.from_user.first_name
+    )
+    if examination:
+        await message.answer(
+            f'{message.from_user.first_name}, пройдите процедуру регистрации, нажмите кнопку меню'
+            ' рядом с полем ввода сообщения и выберите команду <start>'
+        )
+    elif not examination:
+        # Проверка правильности ввода ссылки
+        article = wbapi.retrieving_article(message.text)
+        if article is not None:
+            data = await wbapi.get_current_price(article)
+            msg = (data.get('name') + '\n' + 'Цена: ' + str(data.get('price')) + ' руб')
+            pic = await wbapi.get_pic_price(article)
+            # Внесение данных в функцию занесения данных в БД
+            database_query_data['user_id'] = message.from_user.id
+            database_query_data['article'] = article
+            database_query_data['name'] = data.get('name')
+            database_query_data['starting_price'] = data.get('price')
+            database_query_data['registration_date'] = str(datetime.datetime.now())
+            database_query_data['link_picture'] = pic
+            database_query_data['link_goods'] = data.get('getURL')
+            # Создание кнопки для внесения данных товара
+            builder = InlineKeyboardBuilder()
+            builder.row(InlineKeyboardButton(
+                text='Нажмите для выбора товара',
+                callback_data='check_record')
+            )
+            # Отправка сообщения с информацией по товару и кнопкой
+            await message.reply_photo(photo=pic, caption=msg, reply_markup=builder.as_markup())
+        else:
+            await message.reply('Не корректно введена ссылка')
     else:
-        await message.reply('Не корректно введена ссылка')
+        await message.answer(
+            f'{message.from_user.first_name}, что-то пошло не так!'
+        )
+
+
+# Обработка коллбеков
+# Внесение товара в БД
+@router.callback_query(F.data == "check_record")
+async def send_random_value(callback: CallbackQuery):
+    # Проверка не 0-го состояния данных
+    if database_query_data['user_id'] == 0:
+        print('Попали на 0')
+        await callback.message.answer('Введите ссылку ещё раз')
+    else:
+        examination = await work_db.add_goods_db(
+            database_query_data['user_id'],
+            database_query_data['article'],
+            database_query_data['name'],
+            database_query_data['starting_price'],
+            database_query_data['registration_date'],
+            database_query_data['link_picture'],
+            database_query_data['link_goods'])
+        print(database_query_data)
+        if not examination:
+            await callback.message.answer('Данный товар ранее уже внесен в список Ваших товаров')
+        elif examination:
+            await callback.message.answer('Данный товар внесен в список Ваших товаров')
+    # Обнуление данных товара
+    database_query_data['user_id'] = 0
+    database_query_data['article'] = 0
+    database_query_data['name'] = ''
+    database_query_data['starting_price'] = 0.0
+    database_query_data['registration_date'] = ''
+    database_query_data['link_picture'] = ''
+    database_query_data['link_goods'] = ''
+    print(database_query_data)
+
+
 
 # # Хендлер Запрос по последним операциям
 # @router.message(Command('requesttransac'))

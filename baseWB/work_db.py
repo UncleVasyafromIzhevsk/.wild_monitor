@@ -59,9 +59,10 @@ async def delete_user(*args):
                     list_id.append(a[0])
                 if args[0] in list_id:
                     # Удаление пользователя до этого надо сделать
+                    await del_goods_db(args[0], 0, 'user_id')
                     # удаление всех его товаров
                     await db.execute(
-                        "DELETE FROM user WHERE user_id=?", (args)
+                        "DELETE FROM user WHERE user_id=?", args
                     )
                     await db.commit()
                     return True
@@ -78,7 +79,7 @@ async def delete_user(*args):
 # Внесение товара в БД
 async def add_goods_db(*args):
     user_id = args[0]
-    article = args[1]
+    article = int(args[1])
     name = args[2]
     starting_price = args[3]
     registration_date = args[4]
@@ -86,13 +87,15 @@ async def add_goods_db(*args):
     link_goods = args[6]
     goods_table_name = ('index' + str(args[0]) + str(args[1]))
     try:
-        async with aiosqlite.connect('baseWB.db') as db:# ./baseWB/baseWB.db') as db:
+        async with aiosqlite.connect('./baseWB/baseWB.db') as db:
             # Проверка на наличие товара в БД
             async with db.execute(
                     'SELECT user_id, article FROM goods') as cursor:
                 list_id_art = await cursor.fetchall()
                 list_reference = [user_id, article]
                 for a in list_id_art:
+                    print(list(a))
+                    print(list_reference)
                     if list(a) == list_reference:
                         print('huy')
                         await db.commit()
@@ -128,7 +131,7 @@ async def del_goods_db(*args):
     try:
         # Удаление одного товара по артикулу и его юзеру
         if select_d == 'article':
-            async with aiosqlite.connect('baseWB.db') as db:  # ./baseWB/baseWB.db') as db:
+            async with aiosqlite.connect('./baseWB/baseWB.db') as db:
                 async with db.execute(
                         'DELETE from goods where user_id = ? AND article = ?', (
                             user_id, article
@@ -142,7 +145,7 @@ async def del_goods_db(*args):
                     return True
         # Удаление всех товаров пользователя при удалении его бд
         if select_d == 'user_id':
-            async with aiosqlite.connect('baseWB.db') as db:  # ./baseWB/baseWB.db') as db:
+            async with aiosqlite.connect('./baseWB/baseWB.db') as db:
                 async with db.execute(
                         f'SELECT user_id, goods_table_name from goods'
                 ) as cursor:

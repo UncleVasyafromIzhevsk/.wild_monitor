@@ -40,17 +40,13 @@ async def get_current_price(*args):
             response = await client.get(baseURL + args[0])
             a = response.json()
             name = (a['data']['products'][0])['name']
-            true_price = (a['data']['products'][0])['salePriceU']
+            true_price = ((a['data']['products'][0])['salePriceU']) / 100
             b = (((a['data']['products'][0])['sizes'])[0])['stocks']
             if not b:
                 is_available = False
             else:
                 is_available = True
-            c = """
-Название: {}
-Цена: {} руб
-В наличии: {}    
-            """.format(name, true_price // 100, is_available)
+            c = {'name': name, 'price': true_price, 'is_available': is_available, 'getURL': (baseURL + args[0])}
             print(c)
             return c
         except Exception as e:
