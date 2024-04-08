@@ -47,7 +47,7 @@ async def get_current_price(*args):
             else:
                 is_available = True
             c = {'name': name, 'price': true_price, 'is_available': is_available, 'getURL': (baseURL + args[0])}
-            print(c)
+            # print(c)
             return c
         except Exception as e:
             print(e)

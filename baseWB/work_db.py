@@ -1,6 +1,8 @@
 import aiosqlite
 import asyncio
 
+from wbAPI import wbapi
+
 
 # Создание или проверка существования БД
 # Создание таблицы пользователей
@@ -112,6 +114,12 @@ async def add_goods_db(*args):
                 await db.execute(
                     f'CREATE TABLE IF NOT EXISTS {goods_table_name}(data TEXT, last_price REAL);'
                 )
+                # Добавление начального времени и цены в таблицу товара
+                await db.execute(
+                    f'INSERT INTO {goods_table_name}(data, last_price)VALUES (?, ?)', (
+                        registration_date, starting_price
+                    )
+                )
                 await db.commit()
                 return True
     except Exception as e:
@@ -169,3 +177,44 @@ async def del_goods_db(*args):
 
 
 #asyncio.run(del_goods_db(112, 111, 'user_id'))
+
+# Опрос цен и отправка отчетов (главный цикл)
+async def product_survey():
+    try:
+        async with aiosqlite.connect('baseWB.db') as db: #./baseWB/baseWB.db') as db:
+            async with db.execute(
+                    'SELECT user_id, name FROM user'
+            ) as cursor:
+                # Перебор пользователей
+                list_id_name = await cursor.fetchall()
+                for user in list_id_name:
+                    user_id = user[0]
+                    user_name = user[1]
+                    print('\n', '\n', user_id, user_name, '\n')
+                    # Перебор товаров пользователя
+                    async with db.execute(
+                            f'SELECT article, starting_price, link_picture,'
+                            f'goods_table_name, name FROM goods '
+                            f'WHERE user_id LIKE "{user_id}";'
+                    ) as cursor_goods:
+                        list_goods = await cursor_goods.fetchall()
+                        for good in list_goods:
+                            article = good[0]
+                            starting_price = good[1]
+                            link_picture = good[2]
+                            goods_table_name = good[3]
+                            goods_name = good[4]
+                            # print(article, '\n',starting_price, '\n', link_picture, '\n', goods_table_name,
+                            #       '\n', goods_name, '\n')
+                            # Опрос цены и наличия
+                            new_product_data = await wbapi.get_current_price(str(article))
+                            print(new_product_data['name'], '\n',
+                                  new_product_data['price'], ' руб', '\n',
+                                  'Наличие: ', new_product_data['is_available'], '\n')
+
+    except Exception as e:
+        print(
+            f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'В цикле опроса цен'")
+
+asyncio.run(product_survey())
+
