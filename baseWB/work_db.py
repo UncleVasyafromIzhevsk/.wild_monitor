@@ -1,7 +1,9 @@
 import aiosqlite
 import asyncio
 
+
 from wbAPI import wbapi
+from userCom import send_service_messag_user
 
 
 # Создание или проверка существования БД
@@ -172,7 +174,7 @@ async def del_goods_db(*args):
                     return True
     except Exception as e:
         print(
-            f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}")
+            f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'Ошибка при удалении товара")
         return False
 
 
@@ -190,7 +192,7 @@ async def product_survey():
                 for user in list_id_name:
                     user_id = user[0]
                     user_name = user[1]
-                    print('\n', '\n', user_id, user_name, '\n')
+                    print(f'Проверка товаров пользователя {user_name}, с id {user_id}')
                     # Перебор товаров пользователя
                     async with db.execute(
                             f'SELECT article, starting_price, link_picture,'
@@ -199,22 +201,32 @@ async def product_survey():
                     ) as cursor_goods:
                         list_goods = await cursor_goods.fetchall()
                         for good in list_goods:
+                            # Задержка что-бы сервер не ругался
+                            await asyncio.sleep(0.5)
                             article = good[0]
                             starting_price = good[1]
                             link_picture = good[2]
                             goods_table_name = good[3]
                             goods_name = good[4]
-                            # print(article, '\n',starting_price, '\n', link_picture, '\n', goods_table_name,
-                            #       '\n', goods_name, '\n')
                             # Опрос цены и наличия
                             new_product_data = await wbapi.get_current_price(str(article))
                             print(new_product_data['name'], '\n',
                                   new_product_data['price'], ' руб', '\n',
-                                  'Наличие: ', new_product_data['is_available'], '\n')
-
+                                  'Наличие: ', new_product_data['is_available']
+                                  )
+                            if not new_product_data['is_available']:
+                                print(f'{goods_name}, нет наличия на ВБ, товар будет удален')
+                                await send_service_messag_user.product_out_stock(
+                                    user_id=user_id, goods=goods_name, link_picture=link_picture
+                                )
+                                await del_goods_db(user_id, article, 'article', goods_table_name)
     except Exception as e:
         print(
             f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'В цикле опроса цен'")
 
 asyncio.run(product_survey())
+
+
+
+
 

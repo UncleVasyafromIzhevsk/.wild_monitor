@@ -1,5 +1,5 @@
 import json
-import re
+import os
 import datetime
 
 from aiogram import Router, F
@@ -9,8 +9,10 @@ from aiogram.types import (Message, ReplyKeyboardRemove, FSInputFile,
                            ReplyKeyboardMarkup, KeyboardButton, CallbackQuery)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+
 from wbAPI import wbapi
 from baseWB import work_db
+
 
 # Создание отдельного роутера
 router = Router()
@@ -25,6 +27,7 @@ database_query_data = {
     'link_picture': '',
     'link_goods': ''
 }
+
 
 # Хендлер на регистрацию пользователя
 @router.message(Command('start'))
@@ -139,8 +142,6 @@ async def send_random_value(callback: CallbackQuery):
     database_query_data['link_picture'] = ''
     database_query_data['link_goods'] = ''
     print(database_query_data)
-
-
 
 # # Хендлер Запрос по последним операциям
 # @router.message(Command('requesttransac'))

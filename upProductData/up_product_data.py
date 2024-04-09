@@ -10,4 +10,4 @@
 
 import asyncio
 
-async def upProductData():
+# async def upProductData():
