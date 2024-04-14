@@ -36,9 +36,8 @@ async def main():
                            on_startup=(
                                # Асинхронное создание БД и таблиц или их проверка
                                asyncio.create_task(work_db.create_table()),
-                               #                            # Заполнение БД
-                               #                            asyncio.create_task(
-                               #                                tinBase.loading_all_shares(bot)),
+                               # Проверка цен на товары в БД
+                               asyncio.create_task(work_db.product_survey()),
                                #                            # Обновление цен в бесконечном цикле
                                #                            asyncio.create_task(
                                #                                tinBase.get_lates_prices()),

@@ -2,9 +2,9 @@ import aiosqlite
 import asyncio
 import datetime
 
-
 from wbAPI import wbapi
 from userCom import send_service_messag_user
+from productStatistics import product_statistics
 
 
 # Создание или проверка существования БД
@@ -99,8 +99,6 @@ async def add_goods_db(*args):
                 list_id_art = await cursor.fetchall()
                 list_reference = [user_id, article]
                 for a in list_id_art:
-                    print(list(a))
-                    print(list_reference)
                     if list(a) == list_reference:
                         print('huy')
                         await db.commit()
@@ -131,7 +129,7 @@ async def add_goods_db(*args):
         return None
 
 
-#asyncio.run(add_goods_db(114, 111, 'gjpf', 11.1, 'data', 'https://rob.ru', 'https://top.ru'))
+# asyncio.run(add_goods_db(114, 111, 'gjpf', 11.1, 'data', 'https://rob.ru', 'https://top.ru'))
 
 # Удаление товара в БД
 async def del_goods_db(*args):
@@ -145,7 +143,7 @@ async def del_goods_db(*args):
             async with aiosqlite.connect('./baseWB/baseWB.db') as db:
                 async with db.execute(
                         'DELETE from goods where user_id = ? AND article = ?', (
-                            user_id, article
+                                user_id, article
                         )
                 ) as cursor:
                     # Удаление таблицы товара
@@ -179,75 +177,79 @@ async def del_goods_db(*args):
         return False
 
 
-#asyncio.run(del_goods_db(112, 111, 'user_id'))
+# asyncio.run(del_goods_db(112, 111, 'user_id'))
 
 # Опрос цен и отправка отчетов (главный цикл)
 async def product_survey():
     try:
-        async with aiosqlite.connect('baseWB.db') as db: #./baseWB/baseWB.db') as db:
-            async with db.execute(
-                    'SELECT user_id, name FROM user'
-            ) as cursor:
-                # Перебор пользователей
-                list_id_name = await cursor.fetchall()
-                for user in list_id_name:
-                    user_id = user[0]
-                    user_name = user[1]
-                    print(f'Проверка товаров пользователя {user_name}, с id {user_id}')
-                    # Перебор товаров пользователя
-                    async with db.execute(
-                            f'SELECT article, starting_price, link_picture,'
-                            f'goods_table_name, name FROM goods '
-                            f'WHERE user_id LIKE "{user_id}";'
-                    ) as cursor_goods:
-                        list_goods = await cursor_goods.fetchall()
-                        for good in list_goods:
-                            # Задержка что-бы сервер не ругался
-                            await asyncio.sleep(0.5)
-                            article = good[0]
-                            starting_price = good[1]
-                            link_picture = good[2]
-                            goods_table_name = good[3]
-                            goods_name = good[4]
-                            # Опрос цены и наличия
-                            new_product_data = await wbapi.get_current_price(str(article))
-                            print(new_product_data['name'], '\n',
-                                  new_product_data['price'], ' руб', '\n',
-                                  'Наличие: ', new_product_data['is_available']
-                                  )
-                            if not new_product_data['is_available']:
-                                print(f'{goods_name}: нет наличия на ВБ, товар будет удален')
-                                await send_service_messag_user.product_out_stock(
-                                    user_id=user_id, goods=goods_name, link_picture=link_picture
-                                )
-                                await del_goods_db(user_id, article, 'article', goods_table_name)
-                            elif new_product_data['is_available']:
-                                # Открываем таблицу товара и сравниваем последнюю записанную
-                                # и текущую цену на товар
-                                async with db.execute(
-                                        f'SELECT data, last_price FROM {goods_table_name};'
-                                ) as cursor_goods_table:
-                                    list_price = await cursor_goods_table.fetchall()
-                                    last_price = list_price[len(list_price) - 1][1]
-                                    last_datatime = str(datetime.datetime.now())
-                                    print(last_price, ' ', last_datatime)
-                                    if last_price != new_product_data['price']:
-                                        print(last_price, ' ', new_product_data['price'], ' цена поменялась')
-                                        # Добавление времени и цены в таблицу товара
-                                        await db.execute(
-                                            f'INSERT INTO {goods_table_name}(data, last_price)VALUES (?, ?)', (
-                                                last_datatime, new_product_data['price']
+        while True:
+            async with aiosqlite.connect('./baseWB/baseWB.db') as db:
+                async with db.execute(
+                        'SELECT user_id, name FROM user'
+                ) as cursor:
+                    # Перебор пользователей
+                    list_id_name = await cursor.fetchall()
+                    for user in list_id_name:
+                        user_id = user[0]
+                        user_name = user[1]
+                        # Задержка что-бы сервер не ругался
+                        await asyncio.sleep(600)
+                        print(f'Проверка товаров пользователя {user_name}, с id {user_id}')
+                        # Перебор товаров пользователя
+                        async with db.execute(
+                                f'SELECT article, starting_price, link_picture,'
+                                f'goods_table_name, name FROM goods '
+                                f'WHERE user_id LIKE "{user_id}";'
+                        ) as cursor_goods:
+                            list_goods = await cursor_goods.fetchall()
+                            for good in list_goods:
+                                # Задержка что-бы сервер не ругался
+                                await asyncio.sleep(0.5)
+                                article = good[0]
+                                starting_price = good[1]
+                                link_picture = good[2]
+                                goods_table_name = good[3]
+                                goods_name = good[4]
+                                # Опрос цены и наличия
+                                new_product_data = await wbapi.get_current_price(str(article))
+                                print(new_product_data['name'], '\n',
+                                      new_product_data['price'], ' руб', '\n',
+                                      'Наличие: ', new_product_data['is_available']
+                                      )
+                                if not new_product_data['is_available']:
+                                    print(f'{goods_name}: нет наличия на ВБ, товар будет удален')
+                                    await send_service_messag_user.product_out_stock(
+                                        user_id=user_id, goods=goods_name, link_picture=link_picture
+                                    )
+                                    await del_goods_db(user_id, article, 'article', goods_table_name)
+                                elif new_product_data['is_available']:
+                                    # Открываем таблицу товара и сравниваем последнюю записанную
+                                    # и текущую цену на товар
+                                    async with db.execute(
+                                            f'SELECT data, last_price FROM {goods_table_name};'
+                                    ) as cursor_goods_table:
+                                        list_price = await cursor_goods_table.fetchall()
+                                        last_price = list_price[len(list_price) - 1][1]
+                                        last_datatime = str(datetime.datetime.now())
+                                        print(last_price, ' ', last_datatime)
+                                        if last_price != new_product_data['price']:
+                                            print(last_price, ' ', new_product_data['price'], ' цена поменялась')
+                                            # Добавление времени и цены в таблицу товара
+                                            await db.execute(
+                                                f'INSERT INTO {goods_table_name}(data, last_price)VALUES (?, ?)', (
+                                                    last_datatime, new_product_data['price']
+                                                )
                                             )
-                                        )
-                                        await db.commit()
-
+                                            await db.commit()
+                                            # Строим график изменения цена
+                                            product_statistics.bar_graph(
+                                                data=last_datatime, price=last_price, name=goods_name)
+                                            # Отправляем сообщение об изменении цены
+                                            await send_service_messag_user.price_change(
+                                                user_id=user_id, goods=goods_name, link_picture=link_picture
+                                            )
     except Exception as e:
         print(
             f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'В цикле опроса цен'")
 
-#asyncio.run(product_survey())
-
-
-
-
-
+# asyncio.run(product_survey())

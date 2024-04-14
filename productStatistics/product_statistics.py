@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 def bar_graph(**kwargs):
-    data_time = kwargs['data']
+    data_time = [dt.partition('.')[0] for dt in kwargs['data']]
     price = kwargs['price']
     name = kwargs['name']
     percent = percent_change(starting_price=price[0], last_price=price[len(price) - 1])
@@ -30,7 +30,7 @@ def bar_graph(**kwargs):
         a = price[0] // 10
         ax.set(xlim=(price[0] - a, price[len(price) - 1] + a))
         # Поворот надписей на оси и их параметры
-        plt.yticks(rotation=70, fontsize='xx-small', fontstyle='oblique')
+        plt.yticks(rotation=80, fontsize='xx-small', fontstyle='oblique')
         # Текст на графике
         plt.text(
             price[len(price) - 1], data_time[0], ('Цена\nизменилась\nна: ' + percent),
@@ -47,9 +47,10 @@ def bar_graph(**kwargs):
         # Убрать окошко осей
         plt.box(False)
         # Показать
-        plt.show()
+        # plt.show()
         # записать в картинку
-        # plt.savefig('test.png')
+        plt.savefig('test.png')
+        print('Сделана фотка')
     except Exception as e:
         print(
             f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'При построении графика'")
@@ -84,6 +85,6 @@ def percent_change(**kwargs):
             f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'При расчете процента'")
 
 
-# bar_graph(data=['2024-04-05 20:58', '2024-04-11 20:11', '2024-04-13 20:11'],
+# bar_graph(data=['2024-04-05 20:58:21.007402', '2024-04-11 20:11:49.570408', '2024-04-14 18:34:56.422383'],
 #           price=[101, 102, 130], name='black coffe')
 # percent_change(starting_price=11, last_price=13)

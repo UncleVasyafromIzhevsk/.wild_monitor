@@ -4,7 +4,6 @@ from aiogram import Bot
 
 from dotenv import load_dotenv
 
-
 # Получение переменных
 load_dotenv()
 token_tg = os.getenv("TOKEN_TG")
@@ -19,3 +18,12 @@ async def product_out_stock(**kwargs):
     link_picture = kwargs['link_picture']
     await bot.send_photo(
         user_id, photo=link_picture, caption=f'{goods} - нет в наличии на ВБ, товар удален')
+
+
+# Сообщение об изменении цены на товар
+async def price_change(**kwargs):
+    user_id = kwargs['user_id']
+    goods = kwargs['goods']
+    link_picture = kwargs['link_picture']
+    await bot.send_photo(
+        user_id, photo=link_picture, caption=f'{goods} - цена на товар изменилась')

@@ -141,7 +141,6 @@ async def send_random_value(callback: CallbackQuery):
     database_query_data['registration_date'] = ''
     database_query_data['link_picture'] = ''
     database_query_data['link_goods'] = ''
-    print(database_query_data)
 
 # # Хендлер Запрос по последним операциям
 # @router.message(Command('requesttransac'))
