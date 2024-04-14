@@ -1,5 +1,6 @@
 import aiosqlite
 import asyncio
+import datetime
 
 
 from wbAPI import wbapi
@@ -215,16 +216,36 @@ async def product_survey():
                                   'Наличие: ', new_product_data['is_available']
                                   )
                             if not new_product_data['is_available']:
-                                print(f'{goods_name}, нет наличия на ВБ, товар будет удален')
+                                print(f'{goods_name}: нет наличия на ВБ, товар будет удален')
                                 await send_service_messag_user.product_out_stock(
                                     user_id=user_id, goods=goods_name, link_picture=link_picture
                                 )
                                 await del_goods_db(user_id, article, 'article', goods_table_name)
+                            elif new_product_data['is_available']:
+                                # Открываем таблицу товара и сравниваем последнюю записанную
+                                # и текущую цену на товар
+                                async with db.execute(
+                                        f'SELECT data, last_price FROM {goods_table_name};'
+                                ) as cursor_goods_table:
+                                    list_price = await cursor_goods_table.fetchall()
+                                    last_price = list_price[len(list_price) - 1][1]
+                                    last_datatime = str(datetime.datetime.now())
+                                    print(last_price, ' ', last_datatime)
+                                    if last_price != new_product_data['price']:
+                                        print(last_price, ' ', new_product_data['price'], ' цена поменялась')
+                                        # Добавление времени и цены в таблицу товара
+                                        await db.execute(
+                                            f'INSERT INTO {goods_table_name}(data, last_price)VALUES (?, ?)', (
+                                                last_datatime, new_product_data['price']
+                                            )
+                                        )
+                                        await db.commit()
+
     except Exception as e:
         print(
             f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'В цикле опроса цен'")
 
-asyncio.run(product_survey())
+#asyncio.run(product_survey())
 
 
 
