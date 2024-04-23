@@ -7,6 +7,8 @@
 import asyncio
 import httpx
 
+from aiogram import types
+
 
 # Вайлдберрис
 # Извлечение артикула
@@ -52,6 +54,8 @@ async def get_current_price(*args):
         except Exception as e:
             print(e)
             return False
+
+
 # asyncio.run(get_current_price('204572079'))
 
 # Извлечение URL изображение товара
@@ -75,6 +79,16 @@ async def get_pic_price(*args):
                     basket = idx
                 picURL = ('https://basket-{}.wbbasket.ru/'.format(basket) +
                           'vol{}/part{}/{}/images/big/1.webp'.format(args[0][:3], args[0][:5], args[0]))
+            # Если артикул 8-и значный то адрес
+            elif len(args[0]) == 7:
+                if idx < 10:
+                    basket = '0' + str(idx)
+                elif idx >= 10:
+                    basket = idx
+                picURL = ('https://basket-{}.wbbasket.ru/'.format(basket) +
+                          'vol{}/part{}/{}/images/big/1.webp'.format(args[0][:2], args[0][:4], args[0]))
+            else:
+                picURL = types.FSInputFile['./baseWB/errPic.jpg']
             print(picURL)
             async with httpx.AsyncClient() as client:
                 response = await client.get(picURL)

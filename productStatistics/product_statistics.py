@@ -49,7 +49,7 @@ def bar_graph(**kwargs):
         # Показать
         # plt.show()
         # записать в картинку
-        plt.savefig('test.png')
+        plt.savefig('./productStatistics/product_statis.png')
         print('Сделана фотка')
     except Exception as e:
         print(
@@ -65,6 +65,7 @@ def percent_str(func):
                 out_str = f'+{str(percent)} %'
             else:
                 out_str = f'{str(percent)} %'
+            print(out_str)
             return out_str
         return wrapper
     except Exception as e:
@@ -78,7 +79,7 @@ def percent_change(**kwargs):
     try:
         starting_price = kwargs['starting_price']
         last_price = kwargs['last_price']
-        percent = (1 - (last_price / starting_price)) * 100
+        percent = 100 - (starting_price / last_price) * 100
         return percent
     except Exception as e:
         print(

@@ -181,9 +181,10 @@ async def del_goods_db(*args):
 
 # Опрос цен и отправка отчетов (главный цикл)
 async def product_survey():
-    try:
-        while True:
-            async with aiosqlite.connect('./baseWB/baseWB.db') as db:
+    while True:
+        try:
+            async with aiosqlite.connect('./baseWB/baseWB.db') as db:#baseWB.db') as db:
+                await db.commit()
                 async with db.execute(
                         'SELECT user_id, name FROM user'
                 ) as cursor:
@@ -193,12 +194,12 @@ async def product_survey():
                         user_id = user[0]
                         user_name = user[1]
                         # Задержка что-бы сервер не ругался
-                        await asyncio.sleep(600)
+                        await asyncio.sleep(180)#600)
                         print(f'Проверка товаров пользователя {user_name}, с id {user_id}')
                         # Перебор товаров пользователя
                         async with db.execute(
                                 f'SELECT article, starting_price, link_picture,'
-                                f'goods_table_name, name FROM goods '
+                                f'goods_table_name, name, link_goods FROM goods '
                                 f'WHERE user_id LIKE "{user_id}";'
                         ) as cursor_goods:
                             list_goods = await cursor_goods.fetchall()
@@ -210,6 +211,7 @@ async def product_survey():
                                 link_picture = good[2]
                                 goods_table_name = good[3]
                                 goods_name = good[4]
+                                link_goods = good[5]
                                 # Опрос цены и наличия
                                 new_product_data = await wbapi.get_current_price(str(article))
                                 print(new_product_data['name'], '\n',
@@ -241,15 +243,26 @@ async def product_survey():
                                                 )
                                             )
                                             await db.commit()
-                                            # Строим график изменения цена
-                                            product_statistics.bar_graph(
-                                                data=last_datatime, price=last_price, name=goods_name)
-                                            # Отправляем сообщение об изменении цены
-                                            await send_service_messag_user.price_change(
-                                                user_id=user_id, goods=goods_name, link_picture=link_picture
-                                            )
-    except Exception as e:
-        print(
-            f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'В цикле опроса цен'")
+                                            # Открываем таблицу для получения списка цен и дат
+                                            async with db.execute(
+                                                    f'SELECT data, last_price FROM {goods_table_name};'
+                                            ) as cursor_goods_story:
+                                                list_price_data = await cursor_goods_story.fetchall()
+                                                lst_data = [dt[0] for dt in list_price_data]
+                                                lst_price = [pr[1] for pr in list_price_data]
+                                                # Строим график изменения цена
+                                                product_statistics.bar_graph(
+                                                    data=lst_data, price=lst_price, name=goods_name)
+                                                # Отправляем сообщение об изменении цены
+                                                await send_service_messag_user.price_change(
+                                                    user_id=user_id, goods=goods_name, link_picture=link_picture,
+                                                    file_picture='./productStatistics/product_statis.png',
+                                                    link_goods=link_goods,
+                                                    starting_price=starting_price,
+                                                    last_price=new_product_data['price']
+                                                )
+        except Exception as e:
+            print(
+                f"Тип исключения: {type(e).__name__}, сообщение: {str(e)}, 'В цикле опроса цен'")
 
 # asyncio.run(product_survey())
