@@ -38,9 +38,8 @@ async def main():
                                asyncio.create_task(work_db.create_table()),
                                # Проверка цен на товары в БД
                                asyncio.create_task(work_db.product_survey()),
-                               #                            
-                           )
-                           )
+)
+)
 
 
 if __name__ == "__main__":
