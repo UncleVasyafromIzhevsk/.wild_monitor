@@ -38,20 +38,8 @@ async def main():
                                asyncio.create_task(work_db.create_table()),
                                # Проверка цен на товары в БД
                                asyncio.create_task(work_db.product_survey()),
-                               #                            # Обновление цен в бесконечном цикле
-                               #                            asyncio.create_task(
-                               #                                tinBase.get_lates_prices()),
-                               #                            # Прогон табуна из 4 коней в бесконечном цикле
-                               #                            asyncio.create_task(
-                               #                                single_horse_one.hippodrome(bot)),
-                               #                            asyncio.create_task(
-                               #                                single_horse_two.hippodrome(bot)),
-                               #                            asyncio.create_task(
-                               #                                single_horse_tree.hippodrome(bot)),
-                               #                            asyncio.create_task(
-                               #                                single_horse_four.hippodrome(bot)),
-                           )
-                           )
+)
+)
 
 
 if __name__ == "__main__":
