@@ -194,7 +194,7 @@ async def product_survey():
                         user_id = user[0]
                         user_name = user[1]
                         # Задержка что-бы сервер не ругался
-                        await asyncio.sleep(180)#600)
+                        await asyncio.sleep(120)#600)
                         print(f'Проверка товаров пользователя {user_name}, с id {user_id}')
                         # Перебор товаров пользователя
                         async with db.execute(

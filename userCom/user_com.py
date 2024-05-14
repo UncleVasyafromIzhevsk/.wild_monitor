@@ -99,8 +99,8 @@ async def extract_data(message: Message):
         if article is not None:
             data = await wbapi.get_current_price(article)
             msg = (
-                f'{message.from_user.first_name}, товар: \n{data.get('name')},\n'
-                f'с ценой {str(data.get('price'))} рублей,\nвнесен в Ваш список'
+                f'{message.from_user.first_name}, товар: \n{data.get("name")},\n'
+                f'с ценой {str(data.get("price"))} рублей,\nвнесен в Ваш список'
             )
             pic = await wbapi.get_pic_price(article)
             # Внесение данных в функцию занесения данных в БД
